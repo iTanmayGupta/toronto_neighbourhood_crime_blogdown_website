@@ -1,0 +1,234 @@
+---
+title: "Are Populous Neighbourhoods More Prone To Crime?"
+author: "Tanmay Gupta"
+date: 'September 27, 2020'
+output: html_document
+bibliography: "references.bib"
+---
+
+
+
+<div id="abstract" class="section level1">
+<h1>Abstract</h1>
+<p>Crime has become a frequent occurrence in major metropolitan cities with huge populations. In this blog post, we will analyze the crime rates in the city of Toronto to see the changes in criminal activity over the years (2014-2019). We will group our observations by population size of different neighbourhoods in Toronto to examine if population and criminal activity has any statistical correlation. Finally, we will fit a Simple Linear Regression (SLR) model and perform hypothesis testing to verify our results.</p>
+<div id="introduction" class="section level3">
+<h3>Introduction</h3>
+<p>Crime has always been a topic of major concern among the residents of major metropolitan cities. A lot of studies indicate than crime is more prone in cities than in rural areas. We will study the criminal activity in the city of Toronto which is the major metropolitan city in Canada. We will analyze our data by grouping the neighbourhoods of Toronto based on population size. Subsequently, we will examine different types of crimes (Assault, Auto-Theft, Homicide, Breaking and Entering, Robbery) over the years (2014-2019) to find any trends or patterns.</p>
+<p><strong>About the data:</strong></p>
+<p>This dataset includes the 2014-2019 Crime Data by Neighbourhood. Counts are available for Assault, Auto Theft, Break and Enter, Robbery, Theft Over and Homicide. Data also includes five year averages and crime rates per 100,000 people by neighbourhood based on 2016 Census Population. (Source: <a href="https://open.toronto.ca/dataset/neighbourhood-crime-rates/" class="uri">https://open.toronto.ca/dataset/neighbourhood-crime-rates/</a>)</p>
+<pre><code>## Simple feature collection with 6 features and 61 fields
+## geometry type:  POLYGON
+## dimension:      XY
+## bbox:           xmin: -79.58517 ymin: 43.61273 xmax: -79.28772 ymax: 43.77269
+## CRS:            EPSG:4326
+## # A tibble: 6 x 62
+##   `_id` OBJECTID Neighbourhood Hood_ID Population Assault_2014 Assault_2015
+##   &lt;int&gt;    &lt;int&gt; &lt;chr&gt;         &lt;chr&gt;        &lt;int&gt;        &lt;int&gt;        &lt;int&gt;
+## 1     1       16 South Parkda… 085          21849          202          226
+## 2     2       17 South Riverd… 070          27876          215          207
+## 3     3       18 St.Andrew-Wi… 040          17812           53           41
+## 4     4       19 Taylor-Massey 061          15683          127           92
+## 5     5       20 Humber Summit 021          12416           76           89
+## 6     6       21 Humbermede    022          15545          117          132
+## # … with 55 more variables: Assault_2016 &lt;int&gt;, Assault_2017 &lt;int&gt;,
+## #   Assault_2018 &lt;int&gt;, Assault_2019 &lt;int&gt;, Assault_AVG &lt;dbl&gt;,
+## #   Assault_CHG &lt;dbl&gt;, Assault_Rate_2019 &lt;dbl&gt;, AutoTheft_2014 &lt;int&gt;,
+## #   AutoTheft_2015 &lt;int&gt;, AutoTheft_2016 &lt;int&gt;, AutoTheft_2017 &lt;int&gt;,
+## #   AutoTheft_2018 &lt;int&gt;, AutoTheft_2019 &lt;int&gt;, AutoTheft_AVG &lt;dbl&gt;,
+## #   AutoTheft_CHG &lt;dbl&gt;, AutoTheft_Rate_2019 &lt;dbl&gt;, BreakandEnter_2014 &lt;int&gt;,
+## #   BreakandEnter_2015 &lt;int&gt;, BreakandEnter_2016 &lt;int&gt;,
+## #   BreakandEnter_2017 &lt;int&gt;, BreakandEnter_2018 &lt;int&gt;,
+## #   BreakandEnter_2019 &lt;int&gt;, BreakandEnter_AVG &lt;dbl&gt;, BreakandEnter_CHG &lt;dbl&gt;,
+## #   BreakandEnter_Rate_2019 &lt;dbl&gt;, Homicide_2014 &lt;int&gt;, Homicide_2015 &lt;int&gt;,
+## #   Homicide_2016 &lt;int&gt;, Homicide_2017 &lt;int&gt;, Homicide_2018 &lt;int&gt;,
+## #   Homicide_2019 &lt;int&gt;, Homicide_AVG &lt;dbl&gt;, Homicide_CHG &lt;dbl&gt;,
+## #   Homicide_Rate_2019 &lt;dbl&gt;, Robbery_2014 &lt;int&gt;, Robbery_2015 &lt;int&gt;,
+## #   Robbery_2016 &lt;int&gt;, Robbery_2017 &lt;int&gt;, Robbery_2018 &lt;int&gt;,
+## #   Robbery_2019 &lt;int&gt;, Robbery_AVG &lt;dbl&gt;, Robbery_CHG &lt;dbl&gt;,
+## #   Robbery_Rate_2019 &lt;dbl&gt;, TheftOver_2014 &lt;int&gt;, TheftOver_2015 &lt;int&gt;,
+## #   TheftOver_2016 &lt;int&gt;, TheftOver_2017 &lt;int&gt;, TheftOver_2018 &lt;int&gt;,
+## #   TheftOver_2019 &lt;int&gt;, TheftOver_AVG &lt;dbl&gt;, TheftOver_CHG &lt;dbl&gt;,
+## #   TheftOver_Rate_2019 &lt;dbl&gt;, Shape__Area &lt;dbl&gt;, Shape__Length &lt;dbl&gt;,
+## #   geometry &lt;POLYGON [°]&gt;</code></pre>
+<p><strong>Different Type of Criminal Activities</strong></p>
+<p>Our dataset is very large which makes it difficult to grasp all together. We have made subset dataframes from this dataset which focuses on different types of crimes. The following barplots show the trends in different types of criminal activity over the years (2014-2019). These barplots are also groups categorically based on the population size of the neighbourhood. The population size groups are as follows:</p>
+<ol style="list-style-type: decimal">
+<li>Very small neighbourhoods (0 - 10,000)</li>
+<li>Small neighbourhoods (10,000 - 20,000)</li>
+<li>Medium neighbourhoods (20,000 - 30,000)</li>
+<li>Large neighbourhoods (30,000 - 40,000)</li>
+<li>Very large neighbourhoods (40,000 and more)</li>
+</ol>
+<pre><code>## # A tibble: 6 x 4
+##   `Population Size`                                       geometry Year    Count
+##   &lt;chr&gt;                                              &lt;POLYGON [°]&gt; &lt;chr&gt;   &lt;int&gt;
+## 1 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, … Assaul…   202
+## 2 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, … Assaul…   226
+## 3 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, … Assaul…   231
+## 4 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, … Assaul…   229
+## 5 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, … Assaul…   220
+## 6 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, … Assaul…   251</code></pre>
+<p><img src="/post/2015-07-23-r-rmarkdown_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<pre><code>## # A tibble: 6 x 4
+##   `Population Size`                                      geometry Year     Count
+##   &lt;chr&gt;                                             &lt;POLYGON [°]&gt; &lt;chr&gt;    &lt;int&gt;
+## 1 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002,… AutoThe…    13
+## 2 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002,… AutoThe…    20
+## 3 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002,… AutoThe…    23
+## 4 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002,… AutoThe…    19
+## 5 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002,… AutoThe…    17
+## 6 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002,… AutoThe…    20</code></pre>
+<p><img src="/post/2015-07-23-r-rmarkdown_files/figure-html/unnamed-chunk-2-2.png" width="672" /></p>
+<pre><code>## # A tibble: 6 x 4
+##   `Population Size`                                       geometry Year    Count
+##   &lt;chr&gt;                                              &lt;POLYGON [°]&gt; &lt;chr&gt;   &lt;int&gt;
+## 1 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, … Homici…     0
+## 2 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, … Homici…     0
+## 3 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, … Homici…     1
+## 4 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, … Homici…     0
+## 5 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, … Homici…     0
+## 6 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, … Homici…     1</code></pre>
+<p><img src="/post/2015-07-23-r-rmarkdown_files/figure-html/unnamed-chunk-2-3.png" width="672" /></p>
+<pre><code>## # A tibble: 6 x 4
+##   `Population Size`                                     geometry Year      Count
+##   &lt;chr&gt;                                            &lt;POLYGON [°]&gt; &lt;chr&gt;     &lt;int&gt;
+## 1 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002… Breakand…    45
+## 2 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002… Breakand…    51
+## 3 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002… Breakand…    71
+## 4 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002… Breakand…    58
+## 5 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002… Breakand…    78
+## 6 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002… Breakand…    89</code></pre>
+<p><img src="/post/2015-07-23-r-rmarkdown_files/figure-html/unnamed-chunk-2-4.png" width="672" /></p>
+<pre><code>## # A tibble: 6 x 4
+##   `Population Size`                                       geometry Year    Count
+##   &lt;chr&gt;                                              &lt;POLYGON [°]&gt; &lt;chr&gt;   &lt;int&gt;
+## 1 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, … Robber…    24
+## 2 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, … Robber…    35
+## 3 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, … Robber…    41
+## 4 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, … Robber…    30
+## 5 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, … Robber…    35
+## 6 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, … Robber…    33</code></pre>
+<p><img src="/post/2015-07-23-r-rmarkdown_files/figure-html/unnamed-chunk-2-5.png" width="672" /></p>
+<p>From the above plots, we can clearly see a rising trend in different criminal activity in Toronto except for robbery which has stayed approximately same. This is what we expected since Toronto has seen an annual population growth rate of 1.10% during these years and has added approximately 400,000 new net residents in its population. Hence, we can make a claim that with a rise in population, criminal activity has also increases.</p>
+<p>These graphs are however, not suited to test our claim as our data does not consist of equal number of neighbourhoods based on population size. Toronto has much more small and medium neighbourhoods. This is reason why their width in the barplots are much larger than the other types of neighbourhoods.</p>
+<p>Let us now plot the same barplot but with aggregate data to further solify our claim.</p>
+<pre class="r"><code># Aggreagate Data
+total_df &lt;- crime_rate_statistics %&gt;% select(&quot;2014&quot;, &quot;2015&quot;, &quot;2016&quot;, &quot;2017&quot;, &quot;2018&quot;, &quot;2019&quot;, `Population Size`) %&gt;% pivot_longer(., cols = c(&quot;2014&quot;, &quot;2015&quot;, &quot;2016&quot;, &quot;2017&quot;, &quot;2018&quot;, &quot;2019&quot;), names_to = &quot;Year&quot;, values_to = &quot;Count&quot;)
+
+HistTotal &lt;- ggplot(total_df, aes(Year, Count)) + geom_bar(stat=&quot;identity&quot;, aes(fill=`Population Size`), width = 0.5) + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) +
+  labs(title=&quot;Aggregate Crime (2014-2019)&quot;)+ylab(&quot;Frequency&quot;)+xlab(&quot;Year&quot;)
+ 
+head(total_df)</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##   `Population Size`                                         geometry Year  Count
+##   &lt;chr&gt;                                                &lt;POLYGON [°]&gt; &lt;chr&gt; &lt;dbl&gt;
+## 1 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, -7… 2014    284
+## 2 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, -7… 2015    332
+## 3 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, -7… 2016    367
+## 4 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, -7… 2017    336
+## 5 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, -7… 2018    350
+## 6 Between 20,0000 and… ((-79.42774 43.62979, -79.42944 43.63002, -7… 2019    394</code></pre>
+<pre class="r"><code>HistTotal</code></pre>
+<p><img src="/post/2015-07-23-r-rmarkdown_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>Now our previous observation are even more clear. We can easily see a rising trend in aggregate criminal activity over the years (2014-2019) in Toronto. We can also see a rise in criminal activity for every single type of neighbourhood based on their population size as the width of each type increases with subsequent years.</p>
+<p><strong>Simple Linear Regression and Hypothesis Testing</strong></p>
+<p>Now we are ready to verify and test our claim. To do so, we will fit a Simple Linear Regression (SLR) model and perform hypothesis testing.</p>
+<p>We will model the relationship between ‘population’ and ‘aggregate criminal activity’ (both in integers) for all neighbourhoods of Toronto to find if there is any statistical correlation between them.</p>
+<p>We have chosen ‘population’ to be our explanatory variable and ‘aggregate criminal activity’ as our response variable to see if changes in the former lead to any changes in the latter.</p>
+<p>We will make two histograms for frequency of “population sub-groups” and “aggregate criminal activity in each neighbourhood” to check for the normality our our variables.</p>
+<p>We will also make two scatter plots:</p>
+<ol style="list-style-type: decimal">
+<li>Without perceptible division among population sub-groups.</li>
+<li>With perceptible division among population sub-groups.</li>
+</ol>
+<p>Both of them will have the line a line if best fit along with a shaded region of 95% confidence interval.</p>
+<pre class="r"><code>histAgg&lt;-ggplot(data=total_df,aes(Count))+geom_histogram()+labs(title=&quot;Histogram of Aggregate Crime&quot;)+ylab(&quot;Frequency&quot;)+xlab(&quot;Aggregate Crime&quot;) + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6))
+
+histPop&lt;-ggplot(crime_rate_statistics,aes(`Population Size`))+geom_bar(width=1)+labs(title=&quot;Histogram of Population Size&quot;)+ylab(&quot;Frequency&quot;)+xlab(&quot;Population Size&quot;) + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6))
+
+#install.packages(&quot;cowplot&quot;)
+library(cowplot)
+cowplot::plot_grid(histAgg, histPop, labels = &quot;AUTO&quot;)</code></pre>
+<p><img src="/post/2015-07-23-r-rmarkdown_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<pre class="r"><code># summary for aggregate crime rates for all neighbourhoods
+summary(total_df$Count)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    41.0   116.8   177.0   238.2   285.2  1424.0</code></pre>
+<pre class="r"><code># standard deviation
+sd(total_df$Count)</code></pre>
+<pre><code>## [1] 201.6705</code></pre>
+<pre class="r"><code># Scatterplot with line of best fit
+
+ggplot(crime_rate_statistics, aes(x=Population,y=Total_Crime))+geom_point()+geom_smooth(method=lm)+ labs(title=&quot;Scatterplot of Number of Crime v/s Population&quot;)+xlab(&quot;Population&quot;)+ylab(&quot;Frequency of Crime&quot;)</code></pre>
+<p><img src="/post/2015-07-23-r-rmarkdown_files/figure-html/unnamed-chunk-4-2.png" width="672" /></p>
+<pre class="r"><code>ggplot(crime_rate_statistics, aes(x=Population,y=Total_Crime, color =`Population Size`))+geom_point()+geom_smooth(method=lm)+ labs(title=&quot;Scatterplot of Number of Crime v/s Population (Grouped by Population)&quot;)+xlab(&quot;Population&quot;)+ylab(&quot;Frequency of Crime&quot;)</code></pre>
+<p><img src="/post/2015-07-23-r-rmarkdown_files/figure-html/unnamed-chunk-4-3.png" width="672" /></p>
+<p>From the above plots, we can clearly see that the response variable (aggregate criminal activity) is heavily skewed to the right and does not look approximately normal. The explanatory variable (population) looks approxiamtely normal but is also a bit skewed to the right.</p>
+<p>For the aggregate criminal activity histogram, the centre is 238.2 and the spread is from 41 to 1424 criminal activities. The standard deviation seems to be around 201.67.</p>
+<p>In the first scatterplot, we can clearly see that there is a positive correlation between ‘population’ and ‘aggregate criminal activity’ in Toronto. There are however a few potential outliers (unusual points) around centre portion of the scatterplot.</p>
+<p>Applying a Simple Linear Regression on our model:</p>
+<p>We fit a simple linear regression (SLR) model in our experiment where we take ‘aggregate criminal activity’ on the y-axis which is a response to ‘population’ which we take on the x-axis. We want to estimate the slope <span class="math inline">\(\beta_1\)</span> and intercept <span class="math inline">\(\beta_0\)</span> parameters of the line of best fit y = <span class="math inline">\(b_0\)</span> + <span class="math inline">\(b_1\)</span>.</p>
+<pre class="r"><code>mod1 &lt;- lm(Total_Crime ~ Population) # Fitting an SLR model
+summary(mod1) </code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = Total_Crime ~ Population)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -2150.6  -398.8  -115.8   198.8  4567.1 
+## 
+## Coefficients:
+##               Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -1.719e+02  1.594e+02  -1.078    0.283    
+## Population   8.206e-02  7.273e-03  11.283   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 860.3 on 138 degrees of freedom
+## Multiple R-squared:  0.4798, Adjusted R-squared:  0.4761 
+## F-statistic: 127.3 on 1 and 138 DF,  p-value: &lt; 2.2e-16</code></pre>
+<p>From the above summary of our linear regression model, the p-value for each term tests the null hypothesis that the coefficient is equal to zero.</p>
+<p>For the intercept parameter estimate, p-value &gt; 0.05 which indicates that we cannot reject the null hypothesis. So we should consider removing the intercept variable in our model or setting it to 0 which makes sense since a neighbourhood with population = 0 should have 0 criminal activity as well.</p>
+<p>For the slope parameter estimate, p-value &lt; 0.05 which indicates that we can reject the null hypothesis. It is highly unlikely that the slope parameter is 0 and hence the value predicted by our model is a good estimate.</p>
+<p>From the above analysis, the equation for the line of best fit in our model should be:</p>
+<p><strong>y = 0 + 0.08205868x</strong> [x: population, y: aggregate criminal activity]</p>
+<p>Intercept parameter estimate (<span class="math inline">\(b_0\)</span>): 0</p>
+<p>Slope parameter estimate (<span class="math inline">\(b_1\)</span>): 0.08205868</p>
+<p>Confidence intervals for our slope and intercept parameters estimates:</p>
+<pre class="r"><code>coef(mod1) # the values of the intercept and slope parameter estimates</code></pre>
+<pre><code>##   (Intercept)    Population 
+## -171.92938709    0.08205868</code></pre>
+<pre class="r"><code>confint(mod1, level=0.95) # confidence intervals for slope and intercept parameter estimates</code></pre>
+<pre><code>##                     2.5 %       97.5 %
+## (Intercept) -487.20771518 143.34894101
+## Population     0.06767787   0.09643949</code></pre>
+<p>Using the significance level of 5%, our confidence intervals are shown above. For the intercept parameter we have the interval (0, 143.34894101) meaning we are 95% confident that our intercept value of aggregate criminal activity will be between 0 and 143.3489410 (crime cannot be negative). Similarly, For the slope parameter we have the interval (0.06767787, 0.09643949) meaning we are 95% confident that with increase in the population of a neighbourhood in Toronto, their aggregate criminal activity increase will be between 0.06767787 and 0.09643949.</p>
+<p>It can be clearly seen that the slope parameters of our models i.e. slope and intercept is not 0 but the intercept parameter might be. This model indicates a positive correlation between population and aggregate criminal activity in the neighbourhoods of Toronto.</p>
+<p>Hence, for every net addition to the population of Toronto neighbourhoods, the criminal activity increases by 0.08205868 on average according to our model.</p>
+<pre class="r"><code># Value of statistical correlation between population and aggregate criminal activity in the neighbourhoods of Toronto:
+cor(Population, Total_Crime) # value of statistical correlation</code></pre>
+<pre><code>## [1] 0.6927008</code></pre>
+<p><strong>Shortcomings and Conclusion</strong></p>
+<p>The population variable of our dataset is static and does not change with every year. Due to this, we don’t have the most accurate result which depends on population change. There are also a few lurking variables in this model such as prosperity of a neighbourhood. For instance, a poor neighbourhood might be more prone to crime than a rich neighbourhood. Similarly, proximity to other neighbourhoods with more criminal activity can also effect the aggreagte criminal activity of a neighbourhood.</p>
+<p>We have determined that population size makes a significant difference when it comes to aggregate criminal activity in a neighbourhood of Toronto. From our results, we can say that it is safer to live in less crowded neighnourhoods.</p>
+<p><strong>References</strong></p>
+<ul>
+<li><p>City of Toronto and Toronto Public Health, <a href="https://open.toronto.ca/dataset/neighbourhood-crime-rates/" class="uri">https://open.toronto.ca/dataset/neighbourhood-crime-rates/</a></p></li>
+<li><p>Edward L. Glaeser and Bruce Sacerdote. Why is There More Crime in Cities?. Journal of Political Economy Vol. 107. <a href="https://www.jstor.org/stable/10.1086/250109?seq=1#metadata_info_tab_contents" class="uri">https://www.jstor.org/stable/10.1086/250109?seq=1#metadata_info_tab_contents</a></p></li>
+<li><p>H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.</p></li>
+<li><p>Hadley Wickham, Romain François, Lionel Henry and Kirill Müller (2020). dplyr: A Grammar of Data Manipulation. R package version 1.0.2. <a href="https://CRAN.R-project.org/package=dplyr" class="uri">https://CRAN.R-project.org/package=dplyr</a></p></li>
+<li><p>JJ Allaire and Yihui Xie and Jonathan McPherson and Javier Luraschi and Kevin Ushey and Aron Atkins and Hadley Wickham and Joe Cheng and Winston Chang and Richard Iannone (2020). rmarkdown: Dynamic Documents for R. R package version 2.3. URL <a href="https://rmarkdown.rstudio.com" class="uri">https://rmarkdown.rstudio.com</a>.</p></li>
+<li><p>R Core Team (2020). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL <a href="https://www.R-project.org/" class="uri">https://www.R-project.org/</a>.</p></li>
+<li><p>Toronto Population 2020,
+<a href="https://worldpopulationreview.com/world-cities/toronto-population" class="uri">https://worldpopulationreview.com/world-cities/toronto-population</a></p></li>
+<li><p>Wickham et al., (2019). Welcome to the tidyverse. Journal of Open Source Software, 4(43), 1686, <a href="https://doi.org/10.21105/joss.01686" class="uri">https://doi.org/10.21105/joss.01686</a></p></li>
+<li><p>Yihui Xie (2020). knitr: A General-Purpose Package for Dynamic Report Generation in R. R package version 1.29.</p></li>
+<li><p>Yihui Xie and J.J. Allaire and Garrett Grolemund (2018). R Markdown: The Definitive Guide. Chapman and Hall/CRC. ISBN 9781138359338. URL <a href="https://bookdown.org/yihui/rmarkdown" class="uri">https://bookdown.org/yihui/rmarkdown</a>.</p></li>
+<li><p>Yihui Xie (2020). blogdown: Create Blogs and Websites with R Markdown. R package version 0.20.</p></li>
+</ul>
+</div>
+</div>

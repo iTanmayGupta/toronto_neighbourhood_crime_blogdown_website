@@ -1,0 +1,309 @@
+---
+title: "Are Populous Neighbourhoods More Prone To Crime?"
+author: "Tanmay Gupta"
+date: 'September 27, 2020'
+output: html_document
+bibliography: "references.bib"
+---
+
+
+# Abstract
+
+Crime has become a frequent occurrence in major metropolitan cities with huge populations. In this blog post, we will analyze the crime rates in the city of Toronto to see the changes in criminal activity over the years (2014-2019). We will group our observations by population size of different neighbourhoods in Toronto to examine if population and criminal activity has any statistical correlation. Finally, we will fit a Simple Linear Regression (SLR) model and perform hypothesis testing to verify our results.
+
+### Introduction
+
+Crime has always been a topic of major concern among the residents of major metropolitan cities. A lot of studies indicate than crime is more prone in cities than in rural areas. We will study the criminal activity in the city of Toronto which is the major metropolitan city in Canada. We will analyze our data by grouping the neighbourhoods of Toronto based on population size. Subsequently, we will examine different types of crimes (Assault, Auto-Theft, Homicide, Breaking and Entering, Robbery) over the years (2014-2019) to find any trends or patterns.
+
+**About the data:**
+
+This dataset includes the 2014-2019 Crime Data by Neighbourhood. Counts are available for Assault, Auto Theft, Break and Enter, Robbery, Theft Over and Homicide. Data also includes five year averages and crime rates per 100,000 people by neighbourhood based on 2016 Census Population. (Source: https://open.toronto.ca/dataset/neighbourhood-crime-rates/)
+
+```{r, echo=FALSE, message=FALSE, warning = FALSE}
+library(tidyverse) #load tidyverse library
+library(opendatatoronto) #load opendatatoronto library
+
+# Downloading the "Neighbourhood Crime Rates" statistics from https://open.toronto.ca/ using the opendatatoronto R Package.
+crime_rate_packages <- search_packages("Neighbourhood Crime Rates")
+crime_rate_resources <- crime_rate_packages %>%
+  list_package_resources()
+crime_rate_statistics <- crime_rate_resources %>% 
+  get_resource()
+
+head(crime_rate_statistics)
+
+# grouping neighbourhoods by size by adding a 'size' column in the data frame
+
+# creating 'size' column and setting all values of size to 0 
+crime_rate_statistics$"Population Size" <- 0
+
+crime_rate_statistics$Total_Assaults <- 0
+crime_rate_statistics$Total_AutoTheft <- 0
+crime_rate_statistics$Total_BreakandEnter <- 0
+crime_rate_statistics$Total_Homicide <- 0
+crime_rate_statistics$Total_Robbery <- 0
+
+crime_rate_statistics$"2014" <- 0
+crime_rate_statistics$"2015" <- 0
+crime_rate_statistics$"2016" <- 0
+crime_rate_statistics$"2017" <- 0
+crime_rate_statistics$"2018" <- 0
+crime_rate_statistics$"2019" <- 0
+
+crime_rate_statistics$Total_Crime <- 0
+
+# categorizing neighbourhoods based on population size
+for(i in 1:nrow(crime_rate_statistics)){
+  
+  crime_rate_statistics$Total_Assaults[i] = (crime_rate_statistics$Assault_2014[i] +   crime_rate_statistics$Assault_2015[i] + crime_rate_statistics$Assault_2016[i] + crime_rate_statistics$Assault_2017[i] + crime_rate_statistics$Assault_2018[i] + crime_rate_statistics$Assault_2019[i])
+  crime_rate_statistics$Total_AutoTheft[i] = (crime_rate_statistics$AutoTheft_2014[i] + crime_rate_statistics$AutoTheft_2015[i] + crime_rate_statistics$AutoTheft_2016[i] + crime_rate_statistics$AutoTheft_2017[i] + crime_rate_statistics$AutoTheft_2018[i] + crime_rate_statistics$AutoTheft_2019[i])
+  crime_rate_statistics$Total_BreakandEnter[i] = (crime_rate_statistics$BreakandEnter_2014[i] + crime_rate_statistics$BreakandEnter_2015[i] + crime_rate_statistics$BreakandEnter_2016[i] + crime_rate_statistics$BreakandEnter_2017[i] + crime_rate_statistics$BreakandEnter_2018[i] + crime_rate_statistics$BreakandEnter_2019[i])
+  crime_rate_statistics$Total_Homicide[i] = (crime_rate_statistics$Homicide_2014[i] + crime_rate_statistics$Homicide_2015[i] + crime_rate_statistics$Homicide_2016[i] + crime_rate_statistics$Homicide_2017[i] + crime_rate_statistics$Homicide_2018[i] + crime_rate_statistics$Homicide_2019[i])
+  crime_rate_statistics$Total_Robbery[i] = (crime_rate_statistics$Robbery_2014[i] + crime_rate_statistics$Robbery_2015[i] + crime_rate_statistics$Robbery_2016[i] + crime_rate_statistics$Robbery_2017[i] + crime_rate_statistics$Robbery_2018[i] + crime_rate_statistics$Robbery_2019[i])
+  
+  crime_rate_statistics$"2014"[i] = (crime_rate_statistics$Assault_2014[i] + crime_rate_statistics$AutoTheft_2014[i] + crime_rate_statistics$BreakandEnter_2014[i] + crime_rate_statistics$Homicide_2014[i] + crime_rate_statistics$Robbery_2014[i])
+  crime_rate_statistics$"2015"[i] = (crime_rate_statistics$Assault_2015[i] + crime_rate_statistics$AutoTheft_2015[i] + crime_rate_statistics$BreakandEnter_2015[i] + crime_rate_statistics$Homicide_2015[i] + crime_rate_statistics$Robbery_2015[i])
+  crime_rate_statistics$"2016"[i] = (crime_rate_statistics$Assault_2016[i] + crime_rate_statistics$AutoTheft_2016[i] + crime_rate_statistics$BreakandEnter_2016[i] + crime_rate_statistics$Homicide_2016[i] + crime_rate_statistics$Robbery_2016[i])
+  crime_rate_statistics$"2017"[i] = (crime_rate_statistics$Assault_2017[i] + crime_rate_statistics$AutoTheft_2017[i] + crime_rate_statistics$BreakandEnter_2017[i] + crime_rate_statistics$Homicide_2017[i] + crime_rate_statistics$Robbery_2017[i])
+  crime_rate_statistics$"2018"[i] = (crime_rate_statistics$Assault_2018[i] + crime_rate_statistics$AutoTheft_2018[i] + crime_rate_statistics$BreakandEnter_2018[i] + crime_rate_statistics$Homicide_2018[i] + crime_rate_statistics$Robbery_2018[i])
+  crime_rate_statistics$"2019"[i] = (crime_rate_statistics$Assault_2019[i] + crime_rate_statistics$AutoTheft_2019[i] + crime_rate_statistics$BreakandEnter_2019[i] + crime_rate_statistics$Homicide_2019[i] + crime_rate_statistics$Robbery_2019[i])
+  
+  if (crime_rate_statistics$Population[i]<10000) {
+    crime_rate_statistics$"Population Size"[i]="Between 0 and 10,000"
+  }
+  else if (crime_rate_statistics$Population[i]<20000) {
+    crime_rate_statistics$"Population Size"[i]="Between 10,0000 and 20,000"
+  }
+  else if (crime_rate_statistics$Population[i]<30000) {
+    crime_rate_statistics$"Population Size"[i]="Between 20,0000 and 30,000"
+  }
+  else if (crime_rate_statistics$Population[i]<40000) {
+    crime_rate_statistics$"Population Size"[i]="Between 30,0000 and 40,000"
+  }
+  else {
+    crime_rate_statistics$"Population Size"[i]="Greater than 40,000"
+  }
+}
+
+for(i in 1:nrow(crime_rate_statistics)){
+  (crime_rate_statistics$Total_Crime[i] = crime_rate_statistics$Total_Assaults[i] + crime_rate_statistics$Total_AutoTheft[i] + crime_rate_statistics$Total_BreakandEnter[i] + crime_rate_statistics$Total_Homicide[i] + crime_rate_statistics$Total_Robbery[i]) 
+}
+
+attach(crime_rate_statistics)
+
+# making subsets of data frame based on population
+
+very_small_neighbourhoods = crime_rate_statistics[Population<10000,]
+small_neighbourhoods = crime_rate_statistics[Population>=10000 & Population<20000,]
+medium_neighbourhoods = crime_rate_statistics[Population>=20000 & Population<30000,]
+large_neighbourhoods = crime_rate_statistics[Population>=30000 & Population<40000,]
+very_large_neighbourhoods = crime_rate_statistics[Population>=40000,]
+```
+
+**Different Type of Criminal Activities**
+
+Our dataset is very large which makes it difficult to grasp all together. We have made subset dataframes from this dataset which focuses on different types of crimes. The following barplots show the trends in different types of criminal activity over the years (2014-2019). These barplots are also groups categorically based on the population size of the neighbourhood. The population size groups are as follows:
+
+1. Very small neighbourhoods (0 - 10,000)
+2. Small neighbourhoods (10,000 - 20,000)
+3. Medium neighbourhoods (20,000 - 30,000)
+4. Large neighbourhoods (30,000 - 40,000)
+5. Very large neighbourhoods (40,000 and more)
+
+```{r, echo=FALSE, message=FALSE, , warning = FALSE}
+
+library(tidyr)
+library(dplyr)
+
+# Assault Data
+assault_df <- crime_rate_statistics %>% select(Assault_2014, Assault_2015, Assault_2016, Assault_2017, Assault_2018, Assault_2019, `Population Size`) %>% pivot_longer(., cols = c(Assault_2014, Assault_2015, Assault_2016, Assault_2017, Assault_2018, Assault_2019), names_to = "Year", values_to = "Count")
+
+HistAssault <- ggplot(assault_df, aes(Year, Count)) + geom_bar(stat="identity", aes(fill=`Population Size`), width = 0.5) + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) +
+  labs(title="Assaults (2014-2019)")+ylab("Frequency")+xlab("Year")
+
+# Auto Theft Data
+autotheft_df <- crime_rate_statistics %>% select(AutoTheft_2014, AutoTheft_2015, AutoTheft_2016, AutoTheft_2017, AutoTheft_2018, AutoTheft_2019, `Population Size`) %>% pivot_longer(., cols = c(AutoTheft_2014, AutoTheft_2015, AutoTheft_2016, AutoTheft_2017, AutoTheft_2018, AutoTheft_2019), names_to = "Year", values_to = "Count")
+
+HistAuto <- ggplot(autotheft_df, aes(Year, Count)) + geom_bar(stat="identity", aes(fill=`Population Size`), width = 0.5) + 
+  theme(axis.text.x =element_text(angle=65, vjust=0.6)) +
+  labs(title="Auto Thefts (2014-2019)")+ylab("Frequency")+xlab("Year")
+
+# Breaking and Entering Data
+be_df <- crime_rate_statistics %>% select(BreakandEnter_2014, BreakandEnter_2015, BreakandEnter_2016, BreakandEnter_2017, BreakandEnter_2018, BreakandEnter_2019, `Population Size`) %>% pivot_longer(., cols = c(BreakandEnter_2014, BreakandEnter_2015, BreakandEnter_2016, BreakandEnter_2017, BreakandEnter_2018, BreakandEnter_2019), names_to = "Year", values_to = "Count")
+
+HistBE <- ggplot(be_df, aes(Year, Count)) + geom_bar(stat="identity", aes(fill=`Population Size`), width = 0.5) + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) +
+  labs(title="Breaking & Entering (2014-2019)")+ylab("Frequency")+xlab("Year")
+
+# Homicide Data
+homicide_df <- crime_rate_statistics %>% select(Homicide_2014, Homicide_2015, Homicide_2016, Homicide_2017, Homicide_2018, Homicide_2019, `Population Size`) %>% pivot_longer(., cols = c(Homicide_2014, Homicide_2015, Homicide_2016, Homicide_2017, Homicide_2018, Homicide_2019), names_to = "Year", values_to = "Count")
+
+HistHomicide <- ggplot(homicide_df, aes(Year, Count)) + geom_bar(stat="identity", aes(fill=`Population Size`), width = 0.5) + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) +
+  labs(title="Homicide (2014-2019)")+ylab("Frequency")+xlab("Year")
+
+# Robbery Data
+robbery_df <- crime_rate_statistics %>% select(Robbery_2014, Robbery_2015, Robbery_2016, Robbery_2017, Robbery_2018, Robbery_2019, `Population Size`) %>% pivot_longer(., cols = c(Robbery_2014, Robbery_2015, Robbery_2016, Robbery_2017, Robbery_2018, Robbery_2019), names_to = "Year", values_to = "Count")
+
+HistRobbery <- ggplot(robbery_df, aes(Year, Count)) + geom_bar(stat="identity", aes(fill=`Population Size`), width = 0.5) + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) +
+  labs(title="Robbery (2014-2019)")+ylab("Frequency")+xlab("Year")
+
+par(mfrow=c(1,3))
+head(assault_df)
+HistAssault
+head(autotheft_df)
+HistAuto
+head(homicide_df)
+HistHomicide
+
+par(mfrow=c(1,2))
+head(be_df)
+HistBE
+head(robbery_df)
+HistRobbery
+
+```
+
+From the above plots, we can clearly see a rising trend in different criminal activity in Toronto except for robbery which has stayed approximately same. This is what we expected since Toronto has seen an annual population growth rate of 1.10% during these years and has added approximately 400,000 new net residents in its population. Hence, we can make a claim that with a rise in population, criminal activity has also increases. 
+
+These graphs are however, not suited to test our claim as our data does not consist of equal number of neighbourhoods based on population size. Toronto has much more small and medium neighbourhoods. This is reason why their width in the barplots are much larger than the other types of neighbourhoods.
+
+Let us now plot the same barplot but with aggregate data to further solify our claim.
+
+```{r, message=FALSE, , warning = FALSE}
+
+# Aggreagate Data
+total_df <- crime_rate_statistics %>% select("2014", "2015", "2016", "2017", "2018", "2019", `Population Size`) %>% pivot_longer(., cols = c("2014", "2015", "2016", "2017", "2018", "2019"), names_to = "Year", values_to = "Count")
+
+HistTotal <- ggplot(total_df, aes(Year, Count)) + geom_bar(stat="identity", aes(fill=`Population Size`), width = 0.5) + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) +
+  labs(title="Aggregate Crime (2014-2019)")+ylab("Frequency")+xlab("Year")
+ 
+head(total_df)
+HistTotal
+```
+
+Now our previous observation are even more clear. We can easily see a rising trend in aggregate criminal activity over the years (2014-2019) in Toronto. We can also see a rise in criminal activity for every single type of neighbourhood based on their population size as the width of each type increases with subsequent years.
+
+**Simple Linear Regression and Hypothesis Testing**
+
+Now we are ready to verify and test our claim. To do so, we will fit a Simple Linear Regression (SLR) model and perform hypothesis testing.
+
+We will model the relationship between 'population' and 'aggregate criminal activity' (both in integers) for all neighbourhoods of Toronto to find if there is any statistical correlation between them.
+
+We have chosen 'population' to be our explanatory variable and 'aggregate criminal activity' as our response variable to see if changes in the former lead to any changes in the latter.
+
+We will make two histograms for frequency of "population sub-groups" and "aggregate criminal activity in each neighbourhood" to check for the normality our our variables.
+
+We will also make two scatter plots:
+
+1. Without perceptible division among population sub-groups.
+2. With perceptible division among population sub-groups.
+
+Both of them will have the line a line if best fit along with a shaded region of 95% confidence interval.
+
+```{r, message=FALSE}
+
+histAgg<-ggplot(data=total_df,aes(Count))+geom_histogram()+labs(title="Histogram of Aggregate Crime")+ylab("Frequency")+xlab("Aggregate Crime") + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6))
+
+histPop<-ggplot(crime_rate_statistics,aes(`Population Size`))+geom_bar(width=1)+labs(title="Histogram of Population Size")+ylab("Frequency")+xlab("Population Size") + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6))
+
+#install.packages("cowplot")
+library(cowplot)
+cowplot::plot_grid(histAgg, histPop, labels = "AUTO")
+
+# summary for aggregate crime rates for all neighbourhoods
+summary(total_df$Count)
+# standard deviation
+sd(total_df$Count)
+
+# Scatterplot with line of best fit
+
+ggplot(crime_rate_statistics, aes(x=Population,y=Total_Crime))+geom_point()+geom_smooth(method=lm)+ labs(title="Scatterplot of Number of Crime v/s Population")+xlab("Population")+ylab("Frequency of Crime")
+
+ggplot(crime_rate_statistics, aes(x=Population,y=Total_Crime, color =`Population Size`))+geom_point()+geom_smooth(method=lm)+ labs(title="Scatterplot of Number of Crime v/s Population (Grouped by Population)")+xlab("Population")+ylab("Frequency of Crime")
+```
+
+From the above plots, we can clearly see that the response variable (aggregate criminal activity) is heavily skewed to the right and does not look approximately normal. The explanatory variable (population) looks approxiamtely normal but is also a bit skewed to the right.
+
+For the aggregate criminal activity histogram, the centre is 238.2 and the spread is from 41 to 1424 criminal activities. The standard deviation seems to be around 201.67.
+
+In the first scatterplot, we can clearly see that there is a positive correlation between 'population' and 'aggregate criminal activity' in Toronto. There are however a few potential outliers (unusual points) around centre portion of the scatterplot.
+
+Applying a Simple Linear Regression on our model:
+
+We fit a simple linear regression (SLR) model in our experiment where we take 'aggregate criminal activity' on the y-axis which is a response to 'population' which we take on the x-axis. We want to estimate the slope $\beta_1$ and intercept $\beta_0$ parameters of the line of best fit y = $b_0$ + $b_1$. 
+
+```{r, message=FALSE}
+mod1 <- lm(Total_Crime ~ Population) # Fitting an SLR model
+summary(mod1) 
+```
+
+From the above summary of our linear regression model, the p-value for each term tests the null hypothesis that the coefficient is equal to zero.
+
+For the intercept parameter estimate, p-value > 0.05 which indicates that we cannot reject the null hypothesis. So we should consider removing the intercept variable in our model or setting it to 0 which makes sense since a neighbourhood with population = 0 should have 0 criminal activity as well.
+
+For the slope parameter estimate, p-value < 0.05 which indicates that we can reject the null hypothesis. It is highly unlikely that the slope parameter is 0 and hence the value predicted by our model is a good estimate.
+
+From the above analysis, the equation for the line of best fit in our model should be:
+
+**y = 0 + 0.08205868x** [x: population, y: aggregate criminal activity]
+
+Intercept parameter estimate ($b_0$): 0 
+
+Slope parameter estimate ($b_1$): 0.08205868
+
+Confidence intervals for our slope and intercept parameters estimates: 
+
+```{r, message=FALSE}
+coef(mod1) # the values of the intercept and slope parameter estimates
+```
+
+```{r, message=FALSE}
+confint(mod1, level=0.95) # confidence intervals for slope and intercept parameter estimates
+```
+
+Using the significance level of 5%, our confidence intervals are shown above. For the intercept parameter we have the interval (0, 143.34894101) meaning we are 95% confident that our intercept value of aggregate criminal activity will be between 0 and 143.3489410 (crime cannot be negative). Similarly, For the slope parameter we have the interval (0.06767787, 0.09643949) meaning we are 95% confident that with increase in the population of a neighbourhood in Toronto, their aggregate criminal activity increase will be between 0.06767787 and 0.09643949.
+
+It can be clearly seen that the slope parameters of our models i.e. slope and intercept is not 0 but the intercept parameter might be. This model indicates a positive correlation between population and aggregate criminal activity in the neighbourhoods of Toronto.
+
+Hence, for every net addition to the population of Toronto neighbourhoods, the criminal activity increases by 0.08205868 on average according to our model.
+
+```{r, message=FALSE}
+# Value of statistical correlation between population and aggregate criminal activity in the neighbourhoods of Toronto:
+cor(Population, Total_Crime) # value of statistical correlation
+```
+**Shortcomings and Conclusion**
+
+The population variable of our dataset is static and does not change with every year. Due to this, we don't have the most accurate result which depends on population change. There are also a few lurking variables in this model such as prosperity of a neighbourhood. For instance, a poor neighbourhood might be more prone to crime than a rich neighbourhood. Similarly, proximity to other neighbourhoods with more criminal activity can also effect the aggreagte criminal activity of a neighbourhood. 
+
+We have determined that population size makes a significant difference when it comes to aggregate criminal activity in a neighbourhood of Toronto. From our results, we can say that it is safer to live in less crowded neighnourhoods. 
+
+**References**
+
+* City of Toronto and Toronto Public Health, https://open.toronto.ca/dataset/neighbourhood-crime-rates/
+
+* Edward L. Glaeser and Bruce Sacerdote. Why is There More Crime in Cities?. Journal of Political Economy Vol. 107. https://www.jstor.org/stable/10.1086/250109?seq=1#metadata_info_tab_contents
+
+* H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
+
+* Hadley Wickham, Romain François, Lionel Henry and Kirill Müller (2020). dplyr: A Grammar of Data Manipulation. R package version 1.0.2. https://CRAN.R-project.org/package=dplyr
+
+* JJ Allaire and Yihui Xie and Jonathan McPherson and Javier Luraschi and Kevin Ushey and Aron Atkins and Hadley Wickham and Joe Cheng and Winston Chang and Richard Iannone (2020). rmarkdown: Dynamic Documents for R. R package version 2.3. URL https://rmarkdown.rstudio.com.
+
+* R Core Team (2020). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+
+* Toronto Population 2020,
+https://worldpopulationreview.com/world-cities/toronto-population
+
+* Wickham et al., (2019). Welcome to the tidyverse. Journal of Open Source Software, 4(43), 1686, https://doi.org/10.21105/joss.01686
+
+* Yihui Xie (2020). knitr: A General-Purpose Package for Dynamic Report Generation in R. R package version 1.29.
+
+* Yihui Xie and J.J. Allaire and Garrett Grolemund (2018). R Markdown: The Definitive Guide. Chapman and Hall/CRC. ISBN 9781138359338. URL https://bookdown.org/yihui/rmarkdown.
+
+* Yihui Xie (2020). blogdown: Create Blogs and Websites with R Markdown. R package version 0.20.
